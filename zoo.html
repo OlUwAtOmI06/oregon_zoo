@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Oregon Zoo Trip Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background-color: #FFD700;
+      color: #333;
+    }
+    h1 {
+      color: #000080;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    label, select, input {
+      display: block;
+      margin: 0.5rem 0;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background-color: #000080;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    #output {
+      margin-top: 2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Oregon Zoo Trip Calculator</h1>
+  <div class="section" id="intro">
+    <p>Welcome to the Oregon zoo Calculator.</p>
+    <p>Everyone under the age of 2 enters free.</p>
+    <p>Children: Age 2-11 | Adults: Age 12+</p>
+  </div>
+
+  <div class="section">
+    <label>Are you a member or want to be?</label>
+    <select id="isMember">
+      <option value="">-- Select --</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+
+    <div id="memberSection" style="display:none;">
+      <label>Is your membership active?</label>
+      <select id="membershipActive">
+        <option value="">-- Select --</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <div id="membershipDetails" style="display:none;">
+        <label>Number of Adults:</label>
+        <input type="number" id="memAdults" min="0">
+
+        <label>Number of Children:</label>
+        <input type="number" id="memChildren" min="0">
+
+        <label>Number of Guests:</label>
+        <input type="number" id="memGuests" min="0">
+      </div>
+    </div>
+
+    <div id="nonMemberSection" style="display:none;">
+      <label>Is the group size more than 20?</label>
+      <select id="groupSize">
+        <option value="">-- Select --</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <div id="largeGroupSection" style="display:none;">
+        <label>Is the group non-profit?</label>
+        <select id="nonProfit">
+          <option value="">-- Select --</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+
+        <label>Group Size:</label>
+        <input type="number" id="largeGroupSize" min="21">
+      </div>
+
+      <div id="smallGroupSection" style="display:none;">
+        <label>Do you qualify for discount? (Income + (Oregon or Washington) State ID)</label>
+        <select id="discountEligible">
+          <option value="">-- Select --</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+
+        <label>Number of Adults:</label>
+        <input type="number" id="smallAdults" min="0">
+
+        <label>Number of Children:</label>
+        <input type="number" id="smallChildren" min="0">
+      </div>
+    </div>
+
+    <button onclick="calculateTotal()">Calculate</button>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const adultMemFee = 59;
+    const childMemFee = 39;
+    const guestMemFee = 79;
+    const nonprofitRate = 13;
+    const profitRate = 19;
+    const adultNonMemFee = 26;
+    const childNonMemFee = 21;
+
+    document.getElementById('isMember').addEventListener('change', function() {
+      const val = this.value;
+      document.getElementById('memberSection').style.display = val === 'yes' ? 'block' : 'none';
+      document.getElementById('nonMemberSection').style.display = val === 'no' ? 'block' : 'none';
+    });
+
+    document.getElementById('membershipActive').addEventListener('change', function() {
+      document.getElementById('membershipDetails').style.display = this.value === 'no' ? 'block' : 'none';
+    });
+
+    document.getElementById('groupSize').addEventListener('change', function() {
+      document.getElementById('largeGroupSection').style.display = this.value === 'yes' ? 'block' : 'none';
+      document.getElementById('smallGroupSection').style.display = this.value === 'no' ? 'block' : 'none';
+    });
+
+    function calculateTotal() {
+      const isMember = document.getElementById('isMember').value;
+      let total = 0;
+
+      if (isMember === 'yes') {
+        const active = document.getElementById('membershipActive').value;
+        if (active === 'yes') {
+          document.getElementById('output').textContent = 'You get in for free as an active member!';
+          return;
+        }
+        const adults = +document.getElementById('memAdults').value || 0;
+        const children = +document.getElementById('memChildren').value || 0;
+        const guests = +document.getElementById('memGuests').value || 0;
+        total = adults * adultMemFee + children * childMemFee + guests * guestMemFee;
+      } else {
+        const groupBig = document.getElementById('groupSize').value;
+        if (groupBig === 'yes') {
+          const nonprofit = document.getElementById('nonProfit').value;
+          const size = +document.getElementById('largeGroupSize').value || 0;
+          total = size * (nonprofit === 'yes' ? nonprofitRate : profitRate);
+        } else {
+          const discount = document.getElementById('discountEligible').value;
+          const adults = +document.getElementById('smallAdults').value || 0;
+          const children = +document.getElementById('smallChildren').value || 0;
+          if (discount === 'yes') {
+            let sub = 4;
+            let discountedAdults = Math.min(adults, sub);
+            let discountedChildren = Math.min(children, sub - discountedAdults);
+            let remainingAdults = adults - discountedAdults;
+            let remainingChildren = children - discountedChildren;
+            total = (discountedAdults + discountedChildren) * 13 +
+                    remainingAdults * adultNonMemFee +
+                    remainingChildren * childNonMemFee;
+          } else {
+            total = adults * adultNonMemFee + children * childNonMemFee;
+          }
+        }
+      }
+      document.getElementById('output').textContent = `Estimated total: $${total}`;
+    }
+  </script>
+</body>
+</html>
